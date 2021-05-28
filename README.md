@@ -1,2 +1,2 @@
 # sanalasistan
-Final graduation project.
+Final project.

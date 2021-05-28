@@ -23,12 +23,14 @@ UserRepository userRepository;
 	public Optional<User> findByUserId(int id) {
 		return userRepository.findById(id);
 	}
-
+//
+//
 	@Override
 	public void deleteUserByUserId(int userId) {
 		userRepository.deleteById(userId);;
 	}
-
+//
+//
 	@Override
 	public void saveUser(User payload) throws Exception {
 		
@@ -39,9 +41,23 @@ UserRepository userRepository;
 		if (payload.getFirstName() == null || payload.getLastName() == null || payload.getEmail() == null || payload.getPassword() == null) {
 			throw new Exception("Boş bırakılmış zorunlu alan var.");
 		}
-				
+		
+		
 		userRepository.save(payload);
-				
+		
+		
+		
+	}
+
+	@Override
+	public User userLogin(String username, String password) throws Exception{
+		User user=userRepository.findUserByUsernameAndDeletedAtIsNull(username);
+		if(user.getPassword().toString().equals(password)) {
+			return user;
+		}else {
+			throw new Exception("Kayıtlı kullanıcı bulunamadı");
+		}
+		
 	}
 
 }

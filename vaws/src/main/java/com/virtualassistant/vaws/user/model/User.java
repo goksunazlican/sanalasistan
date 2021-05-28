@@ -18,10 +18,10 @@ import lombok.NoArgsConstructor;
 
 public class User{
 	
-    @Id
+	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
-    private String firstName;
+	private String firstName;
     private String lastName;
     private String email;
     private String password;

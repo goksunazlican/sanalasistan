@@ -11,6 +11,7 @@ import com.virtualassistant.vaws.user.model.User;
 public interface UserService {
 	List<User> findUserAll();
 	Optional<User> findByUserId(int id);
+	User userLogin(String username, String password) throws Exception;
 	void deleteUserByUserId(int userId);
 	void saveUser(User payload) throws Exception;
 }

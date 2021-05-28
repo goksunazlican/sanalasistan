@@ -54,4 +54,14 @@ public class UserController {
 			return ResponseEntity.badRequest().body("İşleminiz şu an gerçekleştirilemiyor");
 		}
 	}
+	@PostMapping("/loginUser")
+	public ResponseEntity<?> loginUser(@RequestBody User payload) {
+		try {
+			System.out.println("Giriş yapan kullanıcı "+payload.getUsername());
+			User user= userService.userLogin(payload.getUsername(), payload.getPassword());
+			return ResponseEntity.ok().body(user);
+		} catch (Exception ex) {
+			return ResponseEntity.badRequest().body("İşleminiz şu an gerçekleştirilemiyor");
+		}
+	}
 }

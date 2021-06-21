@@ -2,11 +2,13 @@ package com.virtualassistant.vaws.plan.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import javax.swing.plaf.metal.MetalBorders.PaletteBorder;
+import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +17,9 @@ import com.virtualassistant.vaws.event.model.Event;
 import com.virtualassistant.vaws.event.repository.EventRepository;
 import com.virtualassistant.vaws.event.service.EventService;
 import com.virtualassistant.vaws.partition.model.Partition;
+import com.virtualassistant.vaws.partition.model.Util;
 import com.virtualassistant.vaws.partition.repository.PartitionRepository;
+import com.virtualassistant.vaws.partition.repository.UtilRepository;
 import com.virtualassistant.vaws.partition.service.PartitionService;
 import com.virtualassistant.vaws.plan.model.Plan;
 import com.virtualassistant.vaws.plan.repository.PlanRepository;
@@ -36,6 +40,9 @@ public class PlanServiceImpl implements PlanService {
 	
 	@Autowired
 	EventRepository eventRepository;
+	
+	@Autowired
+	UtilRepository utilRepository;
 	
 	@Override
 	public Optional<Plan> findPlan(int id) {
@@ -140,6 +147,70 @@ public class PlanServiceImpl implements PlanService {
 		}
 	}
 
+/*	@Transactional
+	@Override
+	public void greedyPlan(List<Event> eventList, Plan plan) {
+		partitionRepository.setFalseFullPartition(plan.getPlan_id());
+		List<Partition> partitions = partitionRepository.findAllByPlanId(plan.getPlan_id());
+		for(Event item: eventList) {
+			Integer finish_at = checkHour(item.getFinish_at());
+			Integer counter = 0;
+			for(int i=0; i<finish_at; i++) {
+				if(partitions.get(i).getExist() == false) {
+					counter++;
+				}
+				
+			}
+			Integer duration = item.getDuration();
+			if(counter >= item.getDuration()) {
+				//eski yerimi partitionda false'a çeviricem
+				//partitionRepository.setFalseOldEvent(item.getId());
+				for(int i=0; i<finish_at;i++) {
+					if(partitions.get(i).getExist() == false && duration > 0) {
+						partitions.get(i).setEvent_id(item.getId());
+						partitions.get(i).setExist(true);
+						partitionRepository.save(partitions.get(i));
+						duration--;
+					}
+				}
+				
+				//eventi güncelle
+				List<Partition> partitionListOfEvent=partitionRepository.findByEventId(item.getId());
+				System.out.println(item.getId()+ " : "+ partitionListOfEvent+ ":");
+				Integer start = partitionListOfEvent.get(0).getTime();
+				Integer finish = partitionListOfEvent.get(partitionListOfEvent.size()-1).getTime();
+				
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"); 
+				
+				String utilTimeStart = utilRepository.findByValue(start);
+				String startLocalDateTime = plan.getDateTime().toString() + " " + utilTimeStart;
+				LocalDateTime dateTimeStart = LocalDateTime.parse(startLocalDateTime, formatter);
+				item.setStart_at(dateTimeStart);
+				
+				String utilTimeFinish = utilRepository.findByValue(finish+1);
+				String finishLocalDateTime = plan.getDateTime().toString() + " " + utilTimeFinish;
+				LocalDateTime dateTimeFinish = LocalDateTime.parse(finishLocalDateTime, formatter);
+				item.setFinish_at(dateTimeFinish);
+				
+				eventRepository.save(item);
+							
+			}else {
+				System.out.println("Bu event " +item.getId()+ " yerleştirilemedi!");
+			}
+		}
+	}
+	
+//eski yerimizi temizlemiyoruz
+	//kendi yerimizi de dolu sanıyoruz
+	//eventi güncellemiyoruz
+	
+	@Override
+	public Plan findByDateTime(String dateTime) {
+		
+		return planRepository.findAllByLocalDate(dateTime);
+	}*/
+	
+	@Transactional
 	@Override
 	public void greedyPlan(List<Event> eventList, Plan plan) {
 		List<Partition> partitions = partitionRepository.findAllByPlanId(plan.getPlan_id());
@@ -147,27 +218,63 @@ public class PlanServiceImpl implements PlanService {
 			Integer finish_at = checkHour(item.getFinish_at());
 			Integer counter = 0;
 			for(int i=0; i<finish_at; i++) {
-				if(partitions.get(i).getExist() == false ) {
+				if(partitions.get(i).getExist() == false) {
+					counter++;
+				}
+				else if(partitions.get(i).getEvent_id() == item.getId()) { //dolu olan yer benim ise
 					counter++;
 				}
 			}
-			
+			Integer duration = item.getDuration();
 			if(counter >= item.getDuration()) {
+				//eski yerimi partitionda false'a çeviricem
+				partitionRepository.setFalseOldEvent(item.getId());
 				for(int i=0; i<finish_at;i++) {
-					if(partitions.get(i).getExist() == false && counter > 0) {
+					if(partitions.get(i).getExist() == false && duration > 0) {
 						partitions.get(i).setEvent_id(item.getId());
 						partitions.get(i).setExist(true);
 						partitionRepository.save(partitions.get(i));
-						counter--;
+						duration--;
 					}
 				}
+				
+				//eventi güncelle
+				List<Partition> partitionListOfEvent=partitionRepository.findByEventId(item.getId());
+				System.out.println(item.getId()+ " : "+ partitionListOfEvent+ ":");
+				Integer start = partitionListOfEvent.get(0).getTime();
+				Integer finish = partitionListOfEvent.get(partitionListOfEvent.size()-1).getTime();
+				
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"); 
+				
+				String utilTimeStart = utilRepository.findByValue(start);
+				String startLocalDateTime = plan.getDateTime().toString() + " " + utilTimeStart;
+				LocalDateTime dateTimeStart = LocalDateTime.parse(startLocalDateTime, formatter);
+				item.setStart_at(dateTimeStart);
+				
+				String utilTimeFinish = utilRepository.findByValue(finish+1);
+				String finishLocalDateTime = plan.getDateTime().toString() + " " + utilTimeFinish;
+				LocalDateTime dateTimeFinish = LocalDateTime.parse(finishLocalDateTime, formatter);
+				item.setFinish_at(dateTimeFinish);
+				
+				eventRepository.save(item);
+							
 			}else {
 				System.out.println("Bu event " +item.getId()+ " yerleştirilemedi!");
 			}
 		}
 	}
 	
+//eski yerimizi temizlemiyoruz
+	//kendi yerimizi de dolu sanıyoruz
+	//eventi güncellemiyoruz
+	
+	@Override
+	public Plan findByDateTime(String dateTime) {
 		
+		return planRepository.findAllByLocalDate(dateTime);
+	}
+	
+
 		
 }
 

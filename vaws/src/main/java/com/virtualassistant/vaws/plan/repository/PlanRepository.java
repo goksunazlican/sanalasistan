@@ -19,4 +19,7 @@ public interface PlanRepository  extends JpaRepository<Plan, Integer> {
 	//void fillPlan(Event event, Plan plan);
 	@Query(value ="select * from Plan where date_time = :dateTime",nativeQuery=true)
 	Plan findAllByLocalDate(@Param("dateTime") LocalDate dateTime);
+	
+	@Query(value ="select * from Plan where date_time = :dateTime",nativeQuery=true)
+	Plan findAllByLocalDate(@Param("dateTime") String dateTime);
 }

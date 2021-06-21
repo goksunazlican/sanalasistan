@@ -1,5 +1,6 @@
 package com.virtualassistant.vaws.partition.service;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +12,9 @@ import org.springframework.stereotype.Service;
 
 import com.virtualassistant.vaws.event.model.Event;
 import com.virtualassistant.vaws.partition.model.Partition;
+import com.virtualassistant.vaws.partition.model.Util;
 import com.virtualassistant.vaws.partition.repository.PartitionRepository;
+import com.virtualassistant.vaws.partition.repository.UtilRepository;
 import com.virtualassistant.vaws.plan.model.Plan;
 import com.virtualassistant.vaws.plan.service.PlanService;
 @Service
@@ -21,13 +24,15 @@ public class PartitionServiceImpl implements PartitionService{
 	PlanService planService;
 	@Autowired
 	PartitionRepository partitionRepository;
+	@Autowired
+	UtilRepository utilRepository;
 	
 	@Override
 	public List<Partition> createPartitionList(Plan plan) {
 		List<Partition> partitionList = new ArrayList<>();
-				
+		float time;
 		for(int i = 1; i<= 48 ; i++ ) {
-			Partition partition = new Partition();
+			Partition partition = new Partition();   
 			partition.setTime(i);
 			partition.setExist(false);
 			partition.setPlanDate(plan.getDateTime());
@@ -35,6 +40,7 @@ public class PartitionServiceImpl implements PartitionService{
 			partitionRepository.save(partition);
 			partitionList.add(partition);
 		}
+		setUtil();
 		return partitionList;
 	
 	}
@@ -53,6 +59,30 @@ public class PartitionServiceImpl implements PartitionService{
 				partitionRepository.save(item);
 			}
 			
+		}
+		
+	}
+	
+	//tekrar hesaplanacak :30 yazmıyor
+	public void setUtil() {
+		for(int i = 1; i<= 48 ; i++ ) {
+			Util util = new Util();
+			util.setValue(i);
+			int h=0;
+			int m=0;
+			float a = (float)(i-1)/(float)2;
+
+		    if(a > Math.floor(a)) {
+		    	h = (int) (a);
+		    	m = 30;
+		    	util.setTime( ((h<10)? "0":"") + String.valueOf(h) + ":30");
+		    }else {
+			    h = (int) (a);
+			    m = 00;
+			    util.setTime( ((h<10)? "0":"")+ String.valueOf(h) + ":00");
+		    }
+		    
+		    utilRepository.save(util);
 		}
 		
 	}

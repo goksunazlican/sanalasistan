@@ -65,7 +65,7 @@ public class EventServiceImpl implements EventService {
 			planService.updatePlan(plan);
 
 		} else {
-			System.out.println("This date is not avaible!");
+			System.out.println("Bu tarih uygun değil!");
 		}
 	}
 
@@ -77,10 +77,11 @@ public class EventServiceImpl implements EventService {
 		}
 	}
 
+	
 	@Override
+	@Transactional
 	public void deleteEventById(Event event) {
-		eventRepository.delete(event);
-		;
+		eventRepository.deleteById(event.getId());
 
 	}
 
@@ -134,6 +135,7 @@ public class EventServiceImpl implements EventService {
 	public List<Event> sortEventListByProfit(List<Event> eventList) {
 		Comparator<Event> compareByProfit = (Event o1, Event o2) -> o1.getProfit().compareTo(o2.getProfit());
 		Collections.sort(eventList, compareByProfit);
+		Collections.reverse(eventList);
 		return eventList;
 	}
 

@@ -59,15 +59,22 @@ public class EventController {
 	}
 	
 	@PostMapping("/saveEvent")
-	public ResponseEntity<?> saveUser(@RequestBody Event payload) {
+	public ResponseEntity<?> saveEvent(@RequestBody Event payload) {
 		try {
+			System.out.println(payload);
 			//check suitable time for event 
-			if(payload.getStatus() != EventStatusEnum.INHOLD.toString()) {
-			eventService.saveEvent(payload);	
+			eventService.createPlanIfNotExist(payload);
+			if(planService.checkSuitableTime(payload)) {
+				if(payload.getStatus() != EventStatusEnum.INHOLD.toString()) {
+					eventService.saveEvent(payload);	
+					}else {
+					eventService.saveInholdEvent(payload);
+					}
+					return ResponseEntity.ok().body("Event kaydedildi.");
 			}else {
-			eventService.saveInholdEvent(payload);
+				return ResponseEntity.ok().body("Event kaydedilemedi. Mevcut tarih dolu.");
 			}
-			return ResponseEntity.ok().body("Event kaydedildi.");
+			
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return ResponseEntity.badRequest().body("İşleminiz şu an gerçekleştirilemiyor");
@@ -122,15 +129,19 @@ public class EventController {
 	}
 	
 	@PostMapping("/swapAndMoveOldEvent") //yeni eventi kaydedip eski eventin taşınması.
-	public ResponseEntity<?> swapAndMoveEvent(@RequestBody EventDto eventDto) {
+	public ResponseEntity<?> swapAndMoveEvent(@RequestBody Event newEvent) {
 		try {
-			Event event = eventDto.getOldEvents().get(0);
+			List<Event> oldEventList= eventService.findEventFromPlan(newEvent);
+			EventDto eventDto=new EventDto();
+			eventDto.setOldEvents(oldEventList);
+			Event oldEvent = oldEventList.get(0);
 			
-			partitionService.updatePlanPartition(event.getPlan(), event);
-			eventService.deleteEventById(event);
-			eventService.saveEvent(eventDto.getOldEvents().get(0)); //save old event on new space.	
-			eventService.saveEvent(eventDto.getNewEvent());
-			return ResponseEntity.ok().body("Etkinlik statüsü güncellendi.");
+			//partitionService.updatePlanPartition(oldEvent.getPlan(), oldEvent);//eski eventi bulunduğu yerleri boşalltık
+			//eventService.deleteEventById(oldEvent);//eski eventi eski yerinden sildik
+			eventService.terminateExistEvent(oldEvent);
+			//eventService.saveEvent(eventDto.getOldEvents().get(0)); //save old event on new space.	
+			eventService.saveEvent(newEvent);//yeni eventi eskinin yerine kaydettim
+			return ResponseEntity.ok().body(oldEvent);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return ResponseEntity.badRequest().body("İşleminiz şu an gerçekleştirilemiyor");

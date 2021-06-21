@@ -10,9 +10,14 @@ import com.virtualassistant.vaws.user.model.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
-  
-  Boolean existsByUsernameAndDeletedAtIsNull(String username);
 
-  User findUserByUsernameAndDeletedAtIsNull( @Param("username") String username);
-  
+//@Query("Select e from User e where User.mail =  :email  AND delete_at IS NULL")
+//User findByEmail(@Param("email") String email);
+//
+//@Query("Select e from User e where User.id = :id AND delete_at IS NULL")
+//User findByUserId(@Param("id") int id);
+//
+Boolean existsByUsernameAndDeletedAtIsNull(String username);
+
+User findUserByUsernameAndDeletedAtIsNull( @Param("username") String username);
 }

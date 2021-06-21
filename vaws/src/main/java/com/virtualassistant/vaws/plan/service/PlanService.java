@@ -1,5 +1,6 @@
 package com.virtualassistant.vaws.plan.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -20,5 +21,6 @@ public interface PlanService {
 	void updateEventListInPlan(Plan plan, Event event);
 	void setEventListProfit(List<Event> eventList);
 	void greedyPlan(List<Event> eventList, Plan plan);
+	Plan findByDateTime(String dateTime);
 	
 	}
